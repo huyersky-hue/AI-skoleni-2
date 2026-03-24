@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI hřiště – metodika školení</title>
+  <style>
+    :root {
+      --brand: #E20074;
+      --brand-dark: #b0005b;
+      --bg: #0f1115;
+      --panel: #171a21;
+      --panel-2: #1f2430;
+      --text: #f3f5f7;
+      --muted: #b4bac5;
+      --line: rgba(255,255,255,.1);
+      --shadow: 0 20px 50px rgba(0,0,0,.28);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(226,0,116,.22), transparent 25%),
+        radial-gradient(circle at top left, rgba(226,0,116,.12), transparent 22%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      backdrop-filter: blur(14px);
+      background: rgba(15,17,21,.78);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .topbar-inner,
+    .container {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+
+    .brand-mark {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--brand);
+      box-shadow: 0 0 0 8px rgba(226,0,116,.14);
+      flex: 0 0 auto;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      border: 1px solid var(--line);
+      font-size: 14px;
+      text-decoration: none;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      background: var(--brand);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(226,0,116,.28);
+      transition: transform .18s ease, background .18s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:hover { transform: translateY(-1px); background: var(--brand-dark); }
+    .btn.secondary {
+      background: transparent;
+      border: 1px solid rgba(226,0,116,.35);
+      color: var(--text);
+      box-shadow: none;
+    }
+
+    .hero {
+      padding: 72px 0 38px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .hero-card,
+    .glass {
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-card {
+      padding: 38px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      right: -40px;
+      top: -60px;
+      background: radial-gradient(circle, rgba(226,0,116,.28), transparent 70%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      color: var(--brand);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-size: 12px;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(34px, 6vw, 64px);
+      line-height: .98;
+      letter-spacing: -.04em;
+      max-width: 10ch;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 18px;
+      max-width: 62ch;
+      margin: 0 0 24px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 26px;
+    }
+
+    .stat {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255,255,255,.03);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 26px;
+      margin-bottom: 6px;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .section-nav {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 14px;
+      margin: 22px 0 34px;
+    }
+
+    .nav-card {
+      padding: 18px;
+      border-radius: 20px;
+      text-decoration: none;
+      color: var(--text);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+      min-height: 120px;
+    }
+
+    .nav-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(226,0,116,.45);
+      background: rgba(226,0,116,.08);
+    }
+
+    .nav-card .kicker {
+      color: var(--brand);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .nav-card h3 {
+      margin: 8px 0 8px;
+      font-size: 18px;
+      line-height: 1.15;
+    }
+
+    .nav-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    section {
+      padding: 18px 0 26px;
+    }
+
+    .section-header {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 20px;
+    }
+
+    .section-number {
+      font-size: clamp(44px, 8vw, 88px);
+      line-height: .9;
+      font-weight: 900;
+      color: rgba(226,0,116,.95);
+      letter-spacing: -.05em;
+    }
+
+    .section-header h2 {
+      font-size: clamp(28px, 4vw, 46px);
+      letter-spacing: -.03em;
+      line-height: 1.02;
+      margin: 0 0 8px;
+    }
+
+    .section-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .cards {
+      display: grid;
+      gap: 16px;
+    }
+
+    .task-card {
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .task-head {
+      padding: 22px 24px 12px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .task-title-wrap {
+      max-width: 860px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(226,0,116,.12);
+      border: 1px solid rgba(226,0,116,.24);
+      color: #ff97c8;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      white-space: nowrap;
+    }
+
+    .task-card h3 {
+      margin: 0 0 8px;
+      font-size: clamp(24px, 3vw, 34px);
+      line-height: 1.05;
+      letter-spacing: -.03em;
+    }
+
+    .task-subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .task-body {
+      padding: 0 24px 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .panel {
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+    }
+
+    .panel h4 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--brand);
+    }
+
+    .panel p,
+    .panel li {
+      margin: 0;
+      color: var(--text);
+    }
+
+    .panel p + p,
+    .panel ul,
+    .panel ol,
+    .prompt-box,
+    .meta-box { margin-top: 12px; }
+
+    .panel ul,
+    .panel ol {
+      padding-left: 18px;
+      color: var(--muted);
+    }
+
+    .panel li + li { margin-top: 8px; }
+
+    .prompt-box {
+      position: relative;
+      padding: 16px 52px 16px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(226,0,116,.22);
+      background: rgba(226,0,116,.08);
+      color: #fff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+
+    .copy-btn {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      border: 0;
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: rgba(255,255,255,.08);
+      color: white;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .meta-box {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .meta-item {
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .highlight {
+      color: var(--brand);
+      font-weight: 800;
+    }
+
+    .why {
+      margin-top: 18px;
+      border-left: 4px solid var(--brand);
+      padding: 14px 16px;
+      background: rgba(226,0,116,.08);
+      border-radius: 0 16px 16px 0;
+      color: var(--text);
+    }
+
+    .finale {
+      margin: 30px 0 60px;
+      padding: 34px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(226,0,116,.18), rgba(255,255,255,.03));
+      border: 1px solid rgba(226,0,116,.25);
+      box-shadow: var(--shadow);
+    }
+
+    .finale h2 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 4vw, 54px);
+      line-height: 1;
+      letter-spacing: -.04em;
+    }
+
+    .checklist {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .check {
+      padding: 18px;
+      border-radius: 18px;
+      background: rgba(0,0,0,.16);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .check strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+
+    footer {
+      padding: 0 0 40px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 14px;
+    }
+
+    @media (max-width: 1024px) {
+      .hero-grid,
+      .task-body,
+      .section-header,
+      .checklist,
+      .section-nav {
+        grid-template-columns: 1fr;
+      }
+
+      .stats { grid-template-columns: 1fr 1fr; }
+      .section-header { gap: 10px; }
+      .section-number { font-size: 54px; }
+    }
+
+    @media (max-width: 720px) {
+      .topbar-inner,
+      .hero-actions,
+      .top-actions { align-items: stretch; }
+      .topbar-inner,
+      .hero-actions,
+      .top-actions { flex-direction: column; }
+      .stats { grid-template-columns: 1fr; }
+      .task-head { flex-direction: column; }
+      .hero-card { padding: 26px; }
+      .finale { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><span class="brand-mark"></span>AI hřiště</div>
+      <div class="top-actions">
+        <span class="pill">Firemní barva: <strong style="color:#fff">#E20074</strong></span>
+        <a class="btn secondary" href="#blok-0">Začátek</a>
+        <a class="btn" href="#blok-1">Spustit školení</a>
+      </div>
+    </div>
+  </div>
+
+  <main class="container">
+    <section class="hero" id="top">
+      <div class="hero-grid">
+        <div class="hero-card">
+          <span class="eyebrow">AI školení / interaktivní web</span>
+          <h1>AI vám nevezme práci. Ale člověk, který ji používá, klidně ano.</h1>
+          <p>Tahle stránka není prezentace. Je to průvodce školením. Drží metodiku, vede flow a záměrně v ní nejsou časy, aby to nebylo zavádějící.</p>
+          <div class="hero-actions">
+            <a class="btn" href="#blok-0">Jdeme na to</a>
+            <a class="btn secondary" href="#mapa">Ukázat mapu bloků</a>
+          </div>
+        </div>
+        <div class="glass stats">
+          <div class="stat">
+            <strong>5 bloků</strong>
+            <span>Úvod + 4 části přesně podle metodiky.</span>
+          </div>
+          <div class="stat">
+            <strong>2 role</strong>
+            <span>Web = navigace. AI nástroj = akce.</span>
+          </div>
+          <div class="stat">
+            <strong>Klikací flow</strong>
+            <span>Promítat na plátno a mít otevřené i na zařízeních.</span>
+          </div>
+          <div class="stat">
+            <strong>Copy prompty</strong>
+            <span>Žádné opisování jak ve středověku. Prostě kopírovat.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="mapa">
+      <div class="section-nav">
+        <a class="nav-card" href="#blok-0">
+          <div class="kicker">Blok 0</div>
+          <h3>Cíl školení</h3>
+          <p>Nastavit tón a odbourat obavy.</p>
+        </a>
+        <a class="nav-card" href="#blok-1">
+          <div class="kicker">Blok 1</div>
+          <h3>Sundání digitální masky</h3>
+          <p>AI bez magie, bez pózy, bez kultu.</p>
+        </a>
+        <a class="nav-card" href="#blok-2">
+          <div class="kicker">Blok 2</div>
+          <h3>Drtič nudy a digitální asistent</h3>
+          <p>Praktická hodnota v práci i doma.</p>
+        </a>
+        <a class="nav-card" href="#blok-3">
+          <div class="kicker">Blok 3</div>
+          <h3>Zkrocení zlého stroje</h3>
+          <p>Sandwich prompt a první vlastní výhra.</p>
+        </a>
+        <a class="nav-card" href="#blok-4">
+          <div class="kicker">Blok 4</div>
+          <h3>Zrození virálu</h3>
+          <p>Scénář → obrázek → video.</p>
+        </a>
+      </div>
+    </section>
+
+    <section id="blok-0">
+      <div class="section-header">
+        <div class="section-number">0</div>
+        <div>
+          <h2>Cíl školení</h2>
+          <p>Odbourat obavy z využívání umělé inteligence a ukázat, že její používání může být jednoduché, přínosné a dostupné pro každého.</p>
+        </div>
+      </div>
+
+      <div class="task-card">
+        <div class="task-head">
+          <div class="task-title-wrap">
+            <h3>Proč tu vlastně jsme</h3>
+            <p class="task-subtitle">Dnes si na konkrétních příkladech vyzkoušíme, jak lze AI zapojit do běžných pracovních i osobních situací a že s ní jde pracovat i bez technických znalostí.</p>
+          </div>
+          <div class="badge">Nastavení očekávání</div>
+        </div>
+        <div class="task-body">
+          <div class="panel">
+            <h4>Hlavní sdělení</h4>
+            <p>Důraz je na <span class="highlight">praktické využití</span>, aby si každý odnesl konkrétní zkušenost a chuť dát AI šanci v každodenním životě.</p>
+            <div class="why">Tuhle část je dobré promítnout a říct stručně. Žádná přednáška o technologii. Jen jasný rámec: nejde o teorii, jde o zkušenost.</div>
+          </div>
+          <div class="panel">
+            <h4>Jak pojedeme</h4>
+            <ul>
+              <li>Web budeme mít otevřený, ale pojedeme společně.</li>
+              <li>Web je navigace, AI nástroj je pracovní plocha.</li>
+              <li>Dnes nejdeme obdivovat technologii. Jdeme ji otestovat.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="blok-1">
+      <div class="section-header">
+        <div class="section-number">1</div>
+        <div>
+          <h2>Sundání digitální masky</h2>
+          <p>Ukázat, že AI není magie ani autorita. Je rychlá, užitečná, občas vtipná a občas si prostě vymýšlí.</p>
+        </div>
+      </div>
+
+      <div class="cards">
+        <article class="task-card">
+          <div class="task-head">
+            <div class="task-title-wrap">
+              <h3>Analogová AI – hra s papírky</h3>
+              <p class="task-subtitle">Místo definice LLM si rovnou ukážeme mechaniku. Bez zbytečného technologického divadla.</p>
+            </div>
+            <div class="badge">Offline aktivita</div>
+          </div>
+          <div class="task-body">
+            <div class="panel">
+              <h4>Co uděláme</h4>
+              <p>Rozdělíme se do 3 skupin. Každý dostane papírek. První skupina napíše jedno podstatné jméno, druhá sloveso, třetí přídavné jméno. Pak papírky složíme dohromady.</p>
+              <div class="meta-box">
+                <div class="meta-item">Pomůcky: post-it papírky a propisky</div>
+                <div class="meta-item">Režim: společná fyzická hra</div>
+              </div>
+            </div>
+            <div class="panel">
+              <h4>Pointa</h4>
+              <p>Vznikne nesmyslná nebo vtipná věta. A přesně tady padne věta, kterou si zapamatujeme:</p>
+              <div class="prompt-box">„Takhle funguje AI. Jen ty papírky tahá z miliard textů a snaží se, aby to k sobě pasovalo. Není v tom duše, je v tom statistika. Je to jen extrémně rychlé doplňování slov.“</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="task-card">
+          <div class="task-head">
+            <div class="task-title-wrap">
+              <h3>Lhář v přímém přenosu – provokace stroje</h3>
+              <p class="task-subtitle">Necháme AI chybovat veřejně. Ať z ní spadne aura neomylnosti.</p>
+            </div>
+            <div class="badge">Live demo</div>
+          </div>
+          <div class="task-body">
+            <div class="panel">
+              <h4>Co zkusíme</h4>
+              <p>Otevřeme ChatGPT nebo jiný model a dáme mu nesmyslné zadání, u kterého víme, že bude halucinovat.</p>
+              <div class="prompt-box">Kdo vyhrál hokejové mistrovství světa v roce 1923 v Praze?</div>
+            </div>
+            <div class="panel">
+              <h4>Pointa</h4>
+              <p>Když AI začne sebejistě lhát, ukážeme si to napřímo: <span class="highlight">„Vidíte? Je to jen ukecaný stážista. Chce vás potěšit, tak si vymýšlí. On má svaly, vy máte mozek.“</span></p>
+              <div class="meta-box">
+                <div class="meta-item">Nástroj: projektor + ChatGPT / jiný model</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="task-card">
+          <div class="task-head">
+            <div class="task-title-wrap">
+              <h3>AI jako chameleon</h3>
+              <p class="task-subtitle">Ukážeme si, že AI není roboticky chladná. Mění styl podle zadání.</p>
+            </div>
+            <div class="badge">Stylizace</div>
+          </div>
+          <div class="task-body">
+            <div class="panel">
+              <h4>Co uděláme</h4>
+              <p>Vezmeme suchý a nepříjemný úřední e-mail, třeba zamítnutí reklamace. Necháme AI, aby ho přepsala jako:</p>
+              <ul>
+                <li>pirátský vzkaz,</li>
+                <li>velmi empatický dopis od babičky,</li>
+                <li>rapový text.</li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h4>Pointa</h4>
+              <p>Smích v sále je tady léčba odporu. Když uvidíme, že AI umí být vtipná a kreativní, přestane působit jako hrozba a začne působit jako nástroj nebo hračka.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="task-card">
+          <div class="task-head">
+            <div class="task-title-wrap">
+              <h3>Proč je tahle metodika jiná</h3>
+              <p class="task-subtitle">Tady nejde o experta na pódiu. Jde o společné testování, co AI vydrží.</p>
+            </div>
+            <div class="badge">Rámec práce</div>
+          </div>
+          <div class="task-body">
+            <div class="panel">
+              <h4>Hlavní principy</h4>
+              <ul>
+                <li>Nejsme tu kvůli poučování, ale kvůli zkoušení.</li>
+                <li>Společně testujeme, co AI vydrží.</li>
+                <li>Chyba je funkce, ne bug.</li>
+                <li>Když chyby AI ukážeme hned na začátku, skeptikům vezmeme vítr z plachet.</li>
+                <li>Tlačíme na zdravé ego: stroj maká, člověk řídí.</li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h4>Použité nástroje</h4>
+              <p>Fyzicky: papírky a fixy. Digitálně: ChatGPT ideálně verze 4o pro rychlost a schopnost vtipkovat, případně Claude pro lidštější tón v češtině. Vizuálně: žádné slidy s textem. Klidně jen jeden obraz typu ledovec – nahoře výstup, dole miliardy dat.</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="blok-2">
+      <div class="section-header">
+        <div class="section-number">2</div>
+        <div>
+          <h2>Drtič nudy a digitální asistent</h2>
+          <p>Ukázat praktickou hodnotu AI v každodenním životě. Ne jako techno hračku, ale jako užitečného pomocníka.</p>
+        </div>
+      </div>
+
+      <div class="cards">
+        <article class="task-card">
+          <div class="task-head">
+            <div class="task-title-wrap">
+              <h3>Rentgenové vidění – práce s dlouhým textem</h3>
+              <p class="task-subtitle">AI nečte jako člověk slovo po slově. Vidí strukturu, vztahy a zkratku k jádru věci.</p>
+            </div>
+            <div class="badge">Shrnutí a kontrola</div>
+          </div>
+          <div class="task-body">
+            <div class="panel">
+              <h4>Co zkusíme</h4>
+              <p>Najdeme nudný nebo složitý text: dlouhý e-mail, článek, smlouvu nebo obchodní podmínky. Vložíme ho do AI a dáme jí stručný úkol.</p>
+              <div class="prompt-box"><button class="copy-btn" data-copy="Udělej mi z toho 3 nejdůležitější body pro mě jako zákazníka. Piš stručně.">Kopírovat</button>Udělej mi z toho 3 nejdůležitější body pro mě jako zákazníka. Piš stručně.</div>
+              <div class="prompt-box"><button class="copy-btn" data-copy="Je tam schovaný nějaký háček, na který bych si měl dát pozor?">Kopírovat</button>Je tam schovaný nějaký háček, na který bych si měl dát pozor?</div>
+            </div>
+            <div class="panel">
+              <h4>Pointa</h4>
+              <p>Tady je krásně vidět, jak AI šetří reálný čas a pomáhá najít důležité věci bez čtení každého řádku.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="task-card">
+          <div class="task-head">
+            <div class="task-title-wrap">
+              <h3>Univerzální překladač kontextu</h3>
+              <p class="task-subtitle">AI rozumí vztahům, náladě a situaci. Nejen jednotlivým slovům.</p>
+            </div>
+            <div class="badge">Komunikace</div>
+          </div>
+          <div class="task-body">
+            <div class="panel">
+              <h4>Co uděláme</h4>
+              <p>Vložíme připravený e-mail od naštvaného zákazníka. Pak AI vysvětlíme situaci a necháme ji navrhnout odpověď tak, aby byla slušná, pevná a bez konfliktu.</p>
+              <div class="prompt-box"><button class="copy-btn" data-copy="Napsal mi naštvaný zákazník tento e-mail. Jsem unavený a nechci se s ním hádat, ale musím mu slušně vysvětlit, že reklamaci neuznávám, protože ji poslal pozdě. Napiš mi odpověď tak, aby se neurazil a zůstal naším zákazníkem.">Kopírovat</button>Napsal mi naštvaný zákazník tento e-mail. Jsem unavený a nechci se s ním hádat, ale musím mu slušně vysvětlit, že reklamaci neuznávám, protože ji poslal pozdě. Napiš mi odpověď tak, aby se neurazil a zůstal naším zákazníkem.</div>
+            </div>
+            <div class="panel">
+              <h4>Pointa</h4>
+              <p>AI tady funguje skoro jako emoční filtr. Pomáhá odpracovat těžké části komunikace, aniž by z člověka dělala robota.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="task-card">
+          <div class="task-head">
+            <div class="task-title-wrap">
+              <h3>Kreativní kuchař z ničeho</h3>
+              <p class="task-subtitle">Tahle ukázka funguje skvěle právě proto, že je obyčejná a lidská.</p>
+            </div>
+            <div class="badge">Domácí použití</div>
+          </div>
+          <div class="task-body">
+            <div class="panel">
+              <h4>Co uděláme</h4>
+              <p>Necháme někoho říct 3 náhodné věci z lednice. Třeba hořčici, starý chleba a zbytek párku. Pak dáme AI úkol z toho uvařit něco použitelného.</p>
+              <div class="prompt-box"><button class="copy-btn" data-copy="Mám v lednici toto. Vymysli mi recept na rychlou večeři, kterou zvládnu za 10 minut a bude to chutnat dobře. Pojmenuj to vtipně.">Kopírovat</button>Mám v lednici toto. Vymysli mi recept na rychlou večeři, kterou zvládnu za 10 minut a bude to chutnat dobře. Pojmenuj to vtipně.</div>
+            </div>
+            <div class="panel">
+              <h4>Pointa</h4>
+              <p>Tady dochází i opatrnějším lidem, že AI není jen pro ajťáky v kanclu. Dá se použít i úplně normálně doma.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="task-card">
+          <div class="task-head">
+            <div class="task-title-wrap">
+              <h3>Vysvětlovač pro laiky</h3>
+              <p class="task-subtitle">Když se AI dobře zeptáme, převede složitý koncept do metafory, které rozumí každý.</p>
+            </div>
+            <div class="badge">Vysvětlování</div>
+          </div>
+          <div class="task-body">
+            <div class="panel">
+              <h4>Co zkusíme</h4>
+              <p>Vezmeme složitý pojem z oboru nebo běžný ekonomický termín. Necháme AI vysvětlit ho úplně lidsky.</p>
+              <div class="prompt-box"><button class="copy-btn" data-copy="Jak funguje inflace? Vysvětli mi to tak, jako by mi bylo 10 let a maloval jsem jen Lego.">Kopírovat</button>Jak funguje inflace? Vysvětli mi to tak, jako by mi bylo 10 let a maloval jsem jen Lego.</div>
+            </div>
+            <div class="panel">
+              <h4>Pointa</h4>
+              <p>Tady je hezky vidět opak častého mýtu: na AI se nemusíme ptát „technicky“. Stačí se ptát normálně, lidsky, česky.</p>
+              <div class="why">Tip do vedení: nech zaznít otázku „Kolik času by vám zabralo tohle vysvětlit z hlavy?“ Tady se praktická hodnota ukáže sama.</div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="blok-3">
+      <div class="section-header">
+        <div class="section-number">3</div>
+        <div>
+          <h2>Zkrocení zlého stroje</h2>
+          <p>Překonat bariéru „já to neumím ovládat“ a dát první osobní úspěch. Tady už si to zkusíme sami.</p>
+        </div>
+      </div>
+
+      <div class="cards">
+        <article class="task-card">
+          <div class="task-head">
+            <div class="task-title-wrap">
+              <h3>Sandwichový prompt</h3>
+              <p class="task-subtitle">Jednoduchý návyk, který dramaticky zlepší výstup: <span class="highlight">ROLE + ÚKOL + STYL</span>.</p>
+            </div>
+            <div class="badge">Vlastní práce</div>
+          </div>
+          <div class="task-body">
+            <div class="panel">
+              <h4>Instrukce</h4>
+              <p>Vzpomeň si na jednu věc, kterou musíš udělat do konce týdne a fakt se ti do ní nechce. Třeba osnova porady, odpověď na reklamaci, plán narozeninové oslavy nebo text inzerátu na prodej staré skříně.</p>
+              <p>Teď si otevři svou oblíbenou AI aplikaci a zatím nic nepiš.</p>
+              <div class="meta-box">
+                <div class="meta-item">Zařízení: mobil nebo notebook</div>
+                <div class="meta-item">Když zařízení není po ruce, funguje dvojice</div>
+              </div>
+            </div>
+            <div class="panel">
+              <h4>Společné skládání promptu</h4>
+              <div class="prompt-box"><button class="copy-btn" data-copy="Jsi [ROLE]. Napiš mi [ÚKOL]. Chci to [STYL].">Kopírovat</button>Jsi [ROLE]. Napiš mi [ÚKOL]. Chci to [STYL].</div>
+              <ol>
+                <li><strong>ROLE:</strong> „Jsi [doplňte experta na moji otravu].“ Když píšu report, jsi zkušený analytik. Když píšu inzerát, jsi profi marketér.</li>
+                <li><strong>ÚKOL:</strong> „Napiš mi [úkol, který potřebuju vyřešit].“</li>
+                <li><strong>STYL:</strong> „Chci to [v bodech / vtipně / stručně].“</li>
+              </ol>
+            </div>
+          </div>
+          <div class="task-body" style="padding-top:0;">
+            <div class="panel">
+              <h4>Cíl</h4>
+              <p>Tady chceme zažít okamžik, kdy během pár vteřin vznikne řešení věci, kterou by člověk jinak dlouho odkládal. A najednou je jasné, že AI není soupeř, ale zkratka.</p>
+            </div>
+            <div class="panel">
+              <h4>Tón</h4>
+              <p>Nevysvětluj prompt engineering jak pro NASA. Tohle je jeden blbuvzdorný návyk, ne vysoká škola. Když si tohle člověk odnese, vyhrál první bitvu.</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="blok-4">
+      <div class="section-header">
+        <div class="section-number">4</div>
+        <div>
+          <h2>Zrození virálu – video z publika</h2>
+          <p>Společně napíšeme scénář, necháme AI vytvořit obrazy a ty proměníme do krátkého videa. Tady je krásně vidět, že AI umí nejen pomáhat, ale i tvořit.</p>
+        </div>
+      </div>
+
+      <div class="cards">
+        <article class="task-card">
+          <div class="task-head">
+            <div class="task-title-wrap">
+              <h3>Brainstorming – psaní scénáře</h3>
+              <p class="task-subtitle">Navrhneme hlavního hrdinu, prostředí a krátkou akci s vtipnou pointou. Já jen posbírám nápady a poskládám je dohromady.</p>
+            </div>
+            <div class="badge">Společná tvorba</div>
+          </div>
+          <div class="task-body">
+            <div class="panel">
+              <h4>Příklad scénáře</h4>
+              <ul>
+                <li><strong>Záběr 1:</strong> Roztržitý úředník sedí u stolu zavaleného horou papírů. Vypadá zoufale.</li>
+                <li><strong>Záběr 2:</strong> Papíry se začnou měnit na digitální data a mizet do vzduchu.</li>
+                <li><strong>Záběr 3:</strong> Úředník sedí u čistého stolu, v ruce má kávu a na monitoru svítí nápis: „AI hotovo za 3 vteřiny.“</li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h4>Pointa</h4>
+              <p>Když scénář vznikne přímo z nápadů v místnosti, zapojení jde okamžitě nahoru. Tady už nikdo jen nekouká. Tady se spolutvoří.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="task-card">
+          <div class="task-head">
+            <div class="task-title-wrap">
+              <h3>Režie stroje – generování v Bingu / Copilotu</h3>
+              <p class="task-subtitle">Z myšlenky uděláme obrázek a z obrázku video. Tady to celé dostane wow efekt.</p>
+            </div>
+            <div class="badge">Obrázek → video</div>
+          </div>
+          <div class="task-body">
+            <div class="panel">
+              <h4>Postup</h4>
+              <p>Otevřeme Bing Video Creator nebo Copilot na projektoru. Prompty budeme zadávat společně a sledovat, jak se scéna rodí.</p>
+              <div class="prompt-box"><button class="copy-btn" data-copy="Vytvoř obrázek fotorealistického roztržitého úředníka v kanceláři, který je zavalený horou papírů, filmové osvětlení, pohled zepředu.">Kopírovat</button>Vytvoř obrázek fotorealistického roztržitého úředníka v kanceláři, který je zavalený horou papírů, filmové osvětlení, pohled zepředu.</div>
+              <div class="prompt-box"><button class="copy-btn" data-copy="Vytvoř obrázek stejného úředníka u čistého stolu, usmívá se, v ruce drží kávu, na monitoru svítí nápis AI HOTOVO, fotorealistické, filmové světlo.">Kopírovat</button>Vytvoř obrázek stejného úředníka u čistého stolu, usmívá se, v ruce drží kávu, na monitoru svítí nápis AI HOTOVO, fotorealistické, filmové světlo.</div>
+            </div>
+            <div class="panel">
+              <h4>Závěr</h4>
+              <p>Pak z toho uděláme video. Nemusí být dokonalé. Důležité je vidět přerod nápadu do hotového výstupu během jedné lekce.</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="finale">
+      <h2>Co si odnést</h2>
+      <p>AI není věštec, spasitel ani nepřítel. Je to rychlý pomocník, který umí zkrátit nudnou práci, pomoct se stylem, vysvětlit složité věci a občas vyrobit něco překvapivě zábavného. Když člověk drží volant, funguje.</p>
+      <div class="checklist">
+        <div class="check">
+          <strong>1. Přestat se bát</strong>
+          <span>Uvidíme, že AI není magie a že její chyby jsou čitelné.</span>
+        </div>
+        <div class="check">
+          <strong>2. Zažít první výhru</strong>
+          <span>Každý si zkusí konkrétní použití na vlastním úkolu.</span>
+        </div>
+        <div class="check">
+          <strong>3. Mít chuť pokračovat</strong>
+          <span>Po školení by mělo být jasné: tohle zkusím hned zítra.</span>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Interaktivní návrh webu podle dodané metodiky. Časy záměrně vynechány.
+    </footer>
+  </main>
+
+  <script>
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const text = btn.getAttribute('data-copy');
+        try {
+          await navigator.clipboard.writeText(text);
+          const original = btn.textContent;
+          btn.textContent = 'Zkopírováno';
+          setTimeout(() => btn.textContent = original, 1400);
+        } catch (e) {
+          btn.textContent = 'Nešlo';
+          setTimeout(() => btn.textContent = 'Kopírovat', 1400);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
